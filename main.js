@@ -6,7 +6,18 @@ import fontSrc from 'three/examples/fonts/helvetiker_bold.typeface.json?url'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader'
 import { gsap } from 'gsap'
 import { Vector3 } from 'three/src/math/Vector3'
-import { GrannyKnot } from 'three/examples/jsm/curves/CurveExtras'
+import {
+	GrannyKnot,
+	CinquefoilKnot,
+	TorusKnot,
+	VivianiCurve,
+	TrefoilPolynomialKnot,
+	HelixCurve,
+	DecoratedTorusKnot4b,
+	HeartCurve,
+	KnotCurve,
+	TrefoilKnot,
+} from 'three/examples/jsm/curves/CurveExtras'
 
 // console.log(CurveExtras)
 
@@ -32,7 +43,7 @@ const material = new THREE.MeshNormalMaterial({
 })
 
 const curve = new GrannyKnot()
-const tubeGeometry = new THREE.TubeGeometry(curve, 200, 0.1, 3, true)
+const tubeGeometry = new THREE.TubeGeometry(curve, 400, 0.01, 4, true)
 // tubeGeometry.scale(0.5,0.54,)
 const tubeMaterial = material.clone()
 tubeMaterial.opacity = 0.3
