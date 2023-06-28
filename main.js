@@ -6,6 +6,9 @@ import fontSrc from 'three/examples/fonts/helvetiker_bold.typeface.json?url'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader'
 import { gsap } from 'gsap'
 import { Vector3 } from 'three/src/math/Vector3'
+import { GrannyKnot } from 'three/examples/jsm/curves/CurveExtras'
+
+// console.log(CurveExtras)
 
 /**
  * Cursor
@@ -25,8 +28,17 @@ let font
  * Manhattan
  */
 const material = new THREE.MeshNormalMaterial({
-	// wireframe: true,
+	wireframe: true,
 })
+
+const curve = new GrannyKnot()
+const tubeGeometry = new THREE.TubeGeometry(curve, 200, 0.1, 3, true)
+// tubeGeometry.scale(0.5,0.54,)
+const tubeMaterial = material.clone()
+tubeMaterial.opacity = 0.3
+tubeMaterial.transparent = true
+const tube = new THREE.Mesh(tubeGeometry, tubeMaterial)
+scene.add(tube)
 
 const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
 
@@ -72,7 +84,7 @@ const sizes = {
 const fov = 60
 const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1)
 
-camera.position.set(2, 2, 8)
+camera.position.set(0, 20, 30)
 // camera.lookAt(new THREE.Vector3(0, 2.5, 0))
 
 /**
@@ -102,10 +114,20 @@ const clock = new THREE.Clock()
  */
 function tic() {
 	const delta = clock.getDelta()
+	const time = clock.getElapsedTime()
+	const loopTime = 50
+	const t = (time % loopTime) / loopTime
+	const t2 = ((time + 0.1) % loopTime) / loopTime
+
+	const pos = tube.geometry.parameters.path.getPointAt(t)
+	const pos2 = tube.geometry.parameters.path.getPointAt(t2)
+
+	mesh.position.copy(pos)
+	mesh.lookAt(pos2)
 
 	controls.update()
 
-	updateEnemy()
+	// updateEnemy()
 
 	renderer.render(scene, camera)
 
@@ -161,7 +183,7 @@ const loader = new FontLoader()
 loader.load(fontSrc, function (res) {
 	font = res
 
-	init()
+	// init()
 })
 
 function createText(text, position, color) {
@@ -247,57 +269,6 @@ function init() {
 	const proj = d.clone()
 	proj.normalize().multiplyScalar(4)
 	enemyDirProj = createVector('', proj, enemy.position)
-
-	// const t = 0.05
-	// const P = new THREE.Vector3(0, 0.1, 0)
-	// const Q = new THREE.Vector3(3, 0, 0)
-	// const T = new THREE.Vector3(-2, 2, 1)
-	// // Q.transformDirection(mesh.matrixWorld)
-	// P.normalize()
-	// Q.normalize()
-	// // // const v1 = createVector(2, 2, 0.5)
-	// // // const v2 = createVector(1, 0.5, 3)
-	// // // scene.add(v1.helper, v2.helper)
-	// createVector('P', P)
-	// createVector('Q', Q)
-	// // createVector('T', T)
-	// const dot = P.dot(Q)
-	// console.log(dot)
-	// Q.normalize()
-	// const projqP = Q.multiplyScalar(P.dot(Q))
-	// createVector('projP', projqP)
-	// const perpqP = P.clone().sub(projqP)
-	// createVector('perpqP', perpqP)
-	// const projPOnT = P.clone().projectOnVector(T)
-	// createVector('projP', projPOnT)
-	// mesh.position.add(P)
-	// // v3 = v1 + v2
-	// const v3 = v1.clone()
-	// v3.add(v2)
-	// createVector('v1 + v2', v3)
-	// createVector('v2', v2, v1)
-	// // v4 = v1 - v2
-	// const v4 = v1.clone()
-	// v4.sub(v2)
-	// createVector('v1 - v2', v4, v2)
-	// createVector('v1 - v2', v4)
-	// // v4 = v1 + (-v2)
-	// const v5 = v2.clone().negate()
-	// createVector('-v2', v5, v1)
-	// const v6 = v2.clone().sub(v1)
-	// createVector('v2 - v1', v6)
-	// const prevPos = new THREE.Vector3()
-	// let i = 0
-	// setInterval(() => {
-	// 	const pos = new THREE.Vector3().randomDirection()
-	// 	pos.multiplyScalar(Math.random() * 2 + 1)
-	// 	createVector(`v${i + 1}`, pos, prevPos)
-	// 	prevPos.add(pos)
-	// 	createVector('', prevPos)
-	// 	gsap.to(mesh.position, { duration: t * 0.8, ...prevPos })
-	// 	i++
-	// }, t * 1000)
-	// createVector('P', prevPos)
 }
 
 window.addEventListener('mousemove', (e) => {
