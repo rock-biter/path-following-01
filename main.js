@@ -42,7 +42,21 @@ const material = new THREE.MeshNormalMaterial({
 	wireframe: true,
 })
 
-const curve = new GrannyKnot()
+// const curve = new GrannyKnot()
+const curve = new THREE.CatmullRomCurve3(
+	[
+		new THREE.Vector3(-5, 3, 10),
+		new THREE.Vector3(-5, 5, 5),
+		new THREE.Vector3(0, 0, 0),
+		new THREE.Vector3(5, -5, 5),
+		new THREE.Vector3(10, 0, 10),
+		new THREE.Vector3(5, 10, 8),
+		new THREE.Vector3(0, 5, 15),
+		new THREE.Vector3(-5, 2, 15),
+	],
+	true
+)
+
 const tubeGeometry = new THREE.TubeGeometry(curve, 400, 0.01, 4, true)
 // tubeGeometry.scale(0.5,0.54,)
 const tubeMaterial = material.clone()
