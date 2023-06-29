@@ -43,7 +43,7 @@ export class Enemy {
 	}
 
 	getGeometry() {
-		return new BoxGeometry(3, 0.25, 1)
+		return new BoxGeometry(0.8, 0.8, 0.8)
 	}
 
 	update(dt = 0) {
