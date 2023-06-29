@@ -178,7 +178,7 @@ function tic() {
 	// updateEnemy(delta)
 
 	enemies.forEach((enemy) => enemy.update(delta))
-	console.log(enemies[0].getDistanceFromTarget())
+	// console.log(enemies[0].getDistanceFromTarget())
 	// createDArrow()
 	// createProjVArrow()
 	// createProjDArrow()
@@ -261,7 +261,7 @@ function createText(text, position, color) {
 		})
 	)
 
-	console.log(geometry.boundingBox)
+	// console.log(geometry.boundingBox)
 
 	mesh.position.copy(position)
 
