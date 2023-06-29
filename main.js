@@ -99,12 +99,12 @@ enemy.scale.setScalar(0.5)
 scene.add(enemy)
 
 const axesHelper = new THREE.AxesHelper(4)
-scene.add(axesHelper)
+// scene.add(axesHelper)
 
 const gridHelper = new THREE.GridHelper(4, 4)
 gridHelper.position.set(2, -0.01, 2)
 
-scene.add(gridHelper)
+// scene.add(gridHelper)
 
 /**
  * render sizes
@@ -119,7 +119,7 @@ const sizes = {
 const fov = 60
 const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1)
 
-camera.position.set(0, 20, 30)
+camera.position.set(0, 50, 0)
 // camera.lookAt(new THREE.Vector3(0, 2.5, 0))
 
 /**
@@ -140,7 +140,7 @@ document.body.appendChild(renderer.domElement)
  */
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
-controls.target.set(2, 1, 2)
+// controls.target.set(2, 1, 2)
 
 const clock = new THREE.Clock()
 
