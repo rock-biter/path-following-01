@@ -21,6 +21,15 @@ import {
 
 // console.log(CurveExtras)
 
+let D,
+	projV,
+	V = new THREE.Vector3(0, 0, 14),
+	projD,
+	steeringV = new THREE.Vector3(),
+	steeringFactor = 25,
+	minDistanceFire = 30,
+	repulseV = new THREE.Vector3()
+
 /**
  * Cursor
  */
@@ -39,25 +48,25 @@ let font
  * Manhattan
  */
 const material = new THREE.MeshNormalMaterial({
-	wireframe: true,
+	// wireframe: true,
 })
 
-// const curve = new GrannyKnot()
-const curve = new THREE.CatmullRomCurve3(
-	[
-		new THREE.Vector3(-5, 3, 10),
-		new THREE.Vector3(-5, 5, 5),
-		new THREE.Vector3(0, 0, 0),
-		new THREE.Vector3(5, -5, 5),
-		new THREE.Vector3(10, 0, 10),
-		new THREE.Vector3(5, 10, 8),
-		new THREE.Vector3(0, 5, 15),
-		new THREE.Vector3(-5, 2, 15),
-	],
-	true
-)
+const curve = new GrannyKnot()
+// const curve = new THREE.CatmullRomCurve3(
+// 	[
+// 		new THREE.Vector3(-5, 3, 10),
+// 		new THREE.Vector3(-5, 5, 5),
+// 		new THREE.Vector3(0, 0, 0),
+// 		new THREE.Vector3(5, -5, 5),
+// 		new THREE.Vector3(10, 0, 10),
+// 		new THREE.Vector3(5, 10, 8),
+// 		new THREE.Vector3(0, 5, 15),
+// 		new THREE.Vector3(-5, 2, 15),
+// 	],
+// 	true
+// )
 
-const tubeGeometry = new THREE.TubeGeometry(curve, 400, 0.01, 4, true)
+const tubeGeometry = new THREE.TubeGeometry(curve, 400, 0.1, 4, true)
 // tubeGeometry.scale(0.5,0.54,)
 const tubeMaterial = material.clone()
 tubeMaterial.opacity = 0.3
@@ -65,7 +74,7 @@ tubeMaterial.transparent = true
 const tube = new THREE.Mesh(tubeGeometry, tubeMaterial)
 scene.add(tube)
 
-const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
+const geometry = new THREE.BoxGeometry(2, 2, 2)
 
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
@@ -79,11 +88,12 @@ mesh.position.set(2, 3, -2)
 const enemy = mesh.clone()
 enemy.rotation.set(0, 0, 0)
 enemy.position.set(1, 1, 5)
+enemy.scale.setScalar(0.5)
 
-const cannon = enemy.clone()
-cannon.position.set(0, 0, -0.6)
-cannon.scale.set(0.2, 0.2, 1.5)
-enemy.add(cannon)
+// const cannon = enemy.clone()
+// cannon.position.set(0, 0, 0.6)
+// cannon.scale.set(0.2, 0.2, 1.5)
+// enemy.add(cannon)
 
 // console.log(mesh)
 scene.add(enemy)
@@ -140,7 +150,7 @@ const clock = new THREE.Clock()
 function tic() {
 	const delta = clock.getDelta()
 	const time = clock.getElapsedTime()
-	const loopTime = 50
+	const loopTime = 35
 	const t = (time % loopTime) / loopTime
 	const t2 = ((time + 0.1) % loopTime) / loopTime
 
@@ -152,7 +162,10 @@ function tic() {
 
 	controls.update()
 
-	// updateEnemy()
+	updateEnemy(delta)
+	// createDArrow()
+	// createProjVArrow()
+	// createProjDArrow()
 
 	renderer.render(scene, camera)
 
@@ -183,9 +196,12 @@ function onResize() {
 function createVector(
 	name,
 	v = new THREE.Vector3(),
-	origin = new THREE.Vector3()
+	origin = new THREE.Vector3(),
+	color
 ) {
-	const color = new THREE.Color(Math.random(), Math.random(), Math.random())
+	if (!color) {
+		color = new THREE.Color(Math.random(), Math.random(), Math.random())
+	}
 
 	const h = new THREE.ArrowHelper(
 		v.clone().normalize(),
@@ -208,10 +224,12 @@ const loader = new FontLoader()
 loader.load(fontSrc, function (res) {
 	font = res
 
-	// init()
+	init()
 })
 
 function createText(text, position, color) {
+	if (!text) return
+
 	const geometry = new TextGeometry(text, {
 		font,
 		size: 0.3,
@@ -240,20 +258,111 @@ function createText(text, position, color) {
 
 let enemyDirHelper, enemyDirProj, fireInterval
 
-function updateEnemy() {
-	if (enemy) {
-		enemy.rotation.x = Math.PI * 0.5 * cursor.y
-		enemy.rotation.y = -Math.PI * 0.5 * cursor.x
+function getDVector() {
+	const d = mesh.position.clone()
+	d.sub(enemy.position)
+
+	return d
+}
+
+function createDArrow() {
+	// if (!font) return
+
+	if (D) {
+		scene.remove(D)
+		D.dispose()
 	}
 
-	if (enemyDirHelper) {
-		const enemyDir = new Vector3(0, 0, -1)
+	const d = getDVector()
+
+	D = createVector('', d, enemy.position, new THREE.Color(0xfad451))
+}
+
+function updateRepulseV() {
+	const d = getDVector().length()
+
+	if (d < 6) {
+		repulseV.copy(steeringV).negate()
+		repulseV.multiplyScalar(6 - d).multiplyScalar(2)
+	} else if (d > 15) {
+		repulseV.set(0, 0, 0)
+	}
+}
+
+function updateSteeringV() {
+	const d = getDVector()
+
+	const planeN = V.clone().normalize()
+	// const plane = new THREE.Plane(planeN)
+
+	d.projectOnPlane(planeN)
+	d.normalize().multiplyScalar(steeringFactor)
+	steeringV.copy(d)
+}
+
+function createProjDArrow() {
+	if (projD) {
+		scene.remove(projD)
+		projD.dispose()
+	}
+
+	const d = getDVector()
+
+	const planeN = V.clone().normalize()
+	// const plane = new THREE.Plane(planeN)
+
+	d.projectOnPlane(planeN)
+	d.normalize()
+	// steeringV.copy(d)
+
+	d.multiplyScalar(2)
+
+	projD = createVector('', d, enemy.position, new THREE.Color(0x56ff89))
+}
+
+function createProjVArrow() {
+	// if(!font) return
+
+	if (projV) {
+		scene.remove(projV)
+		projV.dispose()
+	}
+
+	const d = getDVector()
+
+	const v = V.clone()
+
+	v.projectOnVector(d)
+
+	projV = createVector('', v, enemy.position, new THREE.Color(0x893451))
+}
+
+function updateEnemy(dt = 0) {
+	// let vel = new Vector3(0, 0, 1)
+
+	updateSteeringV()
+	updateRepulseV()
+
+	if (enemy) {
+		V.addScaledVector(steeringV, dt)
+		V.addScaledVector(repulseV, dt)
+		V.normalize().multiplyScalar(16)
+		const pos2 = enemy.position.clone().addScaledVector(V, dt)
+
+		enemy.lookAt(pos2)
+		enemy.position.copy(pos2)
+		// enemy.rotation.x = Math.PI * 0.5 * cursor.y
+		// enemy.rotation.y = -Math.PI * 0.5 * cursor.x
+		// vel.transformDirection(enemy.matrixWorld)
+	}
+
+	if (true) {
+		const enemyDir = new Vector3(0, 0, 1)
 		enemyDir.transformDirection(enemy.matrixWorld)
 
-		enemyDirHelper.setDirection(enemyDir)
+		// enemyDirHelper.setDirection(vel)
 
-		const d = mesh.position.clone()
-		d.sub(enemy.position)
+		const d = getDVector()
 
 		const dot = enemyDir.dot(d.normalize())
 		console.log('dot:', dot)
@@ -261,7 +370,7 @@ function updateEnemy() {
 		const v = enemyDir.clone().multiplyScalar(4)
 		v.projectOnVector(d)
 
-		enemyDirProj.setLength(v.length())
+		// enemyDirProj.setLength(v.length())
 
 		if (dot >= 0.995) {
 			if (!fireInterval) {
@@ -276,24 +385,24 @@ function updateEnemy() {
 }
 
 function init() {
-	const v = new Vector3(0, 0, -1)
+	const v = new Vector3(0, 0, 1)
 	v.transformDirection(mesh.matrixWorld).multiplyScalar(4)
 
-	createVector('', v, mesh.position)
+	// createVector('', v, mesh.position)
 
-	const enemyDir = new Vector3(0, 0, -1)
+	const enemyDir = new Vector3(0, 0, 1)
 	enemyDir.transformDirection(enemy.matrixWorld).multiplyScalar(4)
 
-	enemyDirHelper = createVector('', enemyDir, enemy.position)
+	// enemyDirHelper = createVector('', enemyDir, enemy.position)
 
 	const d = mesh.position.clone()
 	d.sub(enemy.position)
 
-	createVector('D', d, enemy.position)
+	// D = createVector('D', d, enemy.position)
 
-	const proj = d.clone()
-	proj.normalize().multiplyScalar(4)
-	enemyDirProj = createVector('', proj, enemy.position)
+	// const proj = d.clone()
+	// proj.normalize().multiplyScalar(4)
+	// enemyDirProj = createVector('', proj, enemy.position)
 }
 
 window.addEventListener('mousemove', (e) => {
@@ -304,13 +413,18 @@ window.addEventListener('mousemove', (e) => {
 const ammoMaterial = new THREE.MeshNormalMaterial()
 
 function fire() {
-	const geometry = new THREE.IcosahedronGeometry(0.05, 1)
+	const d = getDVector()
+	if (d.length() > minDistanceFire) return
+
+	const geometry = new THREE.IcosahedronGeometry(0.2, 1)
 
 	const mesh = new THREE.Mesh(geometry, ammoMaterial)
 	mesh.position.copy(enemy.position)
 
-	mesh.userData.vel = new Vector3(0, 0, -1)
-	mesh.userData.vel.transformDirection(enemy.matrixWorld).multiplyScalar(10)
+	mesh.userData.vel = new Vector3(0, 0, 1)
+	mesh.userData.vel
+		.transformDirection(enemy.matrixWorld)
+		.multiplyScalar(80 + V.length())
 
 	scene.add(mesh)
 	ammo.push(mesh)
