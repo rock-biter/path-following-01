@@ -18,6 +18,7 @@ import {
 	KnotCurve,
 	TrefoilKnot,
 } from 'three/examples/jsm/curves/CurveExtras'
+import { Enemy } from './enemy'
 
 // console.log(CurveExtras)
 
@@ -28,7 +29,8 @@ let D,
 	steeringV = new THREE.Vector3(),
 	steeringFactor = 25,
 	minDistanceFire = 30,
-	repulseV = new THREE.Vector3()
+	repulseV = new THREE.Vector3(),
+	enemies = []
 
 /**
  * Cursor
@@ -90,13 +92,24 @@ enemy.rotation.set(0, 0, 0)
 enemy.position.set(1, 1, 5)
 enemy.scale.setScalar(0.5)
 
+for (let i = 0; i < 3; i++) {
+	const position = new Vector3(
+		Math.random() * 40 - 20,
+		Math.random() * 40 - 20,
+		Math.random() * 40 - 20
+	)
+	const enemy = new Enemy({ scene, position, maxSpeed: 14 + Math.random() * 4 })
+	enemy.follow(mesh)
+	enemies.push(enemy)
+}
+
 // const cannon = enemy.clone()
 // cannon.position.set(0, 0, 0.6)
 // cannon.scale.set(0.2, 0.2, 1.5)
 // enemy.add(cannon)
 
 // console.log(mesh)
-scene.add(enemy)
+// scene.add(enemy)
 
 const axesHelper = new THREE.AxesHelper(4)
 // scene.add(axesHelper)
@@ -162,7 +175,10 @@ function tic() {
 
 	controls.update()
 
-	updateEnemy(delta)
+	// updateEnemy(delta)
+
+	enemies.forEach((enemy) => enemy.update(delta))
+	console.log(enemies[0].getDistanceFromTarget())
 	// createDArrow()
 	// createProjVArrow()
 	// createProjDArrow()
@@ -337,53 +353,6 @@ function createProjVArrow() {
 	projV = createVector('', v, enemy.position, new THREE.Color(0x893451))
 }
 
-function updateEnemy(dt = 0) {
-	// let vel = new Vector3(0, 0, 1)
-
-	updateSteeringV()
-	updateRepulseV()
-
-	if (enemy) {
-		V.addScaledVector(steeringV, dt)
-		V.addScaledVector(repulseV, dt)
-		V.normalize().multiplyScalar(16)
-		const pos2 = enemy.position.clone().addScaledVector(V, dt)
-
-		enemy.lookAt(pos2)
-		enemy.position.copy(pos2)
-		// enemy.rotation.x = Math.PI * 0.5 * cursor.y
-		// enemy.rotation.y = -Math.PI * 0.5 * cursor.x
-		// vel.transformDirection(enemy.matrixWorld)
-	}
-
-	if (true) {
-		const enemyDir = new Vector3(0, 0, 1)
-		enemyDir.transformDirection(enemy.matrixWorld)
-
-		// enemyDirHelper.setDirection(vel)
-
-		const d = getDVector()
-
-		const dot = enemyDir.dot(d.normalize())
-		console.log('dot:', dot)
-
-		const v = enemyDir.clone().multiplyScalar(4)
-		v.projectOnVector(d)
-
-		// enemyDirProj.setLength(v.length())
-
-		if (dot >= 0.995) {
-			if (!fireInterval) {
-				fire()
-				fireInterval = setInterval(fire, 200)
-			}
-		} else {
-			clearInterval(fireInterval)
-			fireInterval = undefined
-		}
-	}
-}
-
 function init() {
 	const v = new Vector3(0, 0, 1)
 	v.transformDirection(mesh.matrixWorld).multiplyScalar(4)
@@ -409,25 +378,5 @@ window.addEventListener('mousemove', (e) => {
 	cursor.x = 2 * (e.clientX / window.innerWidth) - 1
 	cursor.y = -2 * (e.clientY / window.innerHeight) + 1
 })
-
-const ammoMaterial = new THREE.MeshNormalMaterial()
-
-function fire() {
-	const d = getDVector()
-	if (d.length() > minDistanceFire) return
-
-	const geometry = new THREE.IcosahedronGeometry(0.2, 1)
-
-	const mesh = new THREE.Mesh(geometry, ammoMaterial)
-	mesh.position.copy(enemy.position)
-
-	mesh.userData.vel = new Vector3(0, 0, 1)
-	mesh.userData.vel
-		.transformDirection(enemy.matrixWorld)
-		.multiplyScalar(80 + V.length())
-
-	scene.add(mesh)
-	ammo.push(mesh)
-}
 
 // window.addEventListener('click', fire)
